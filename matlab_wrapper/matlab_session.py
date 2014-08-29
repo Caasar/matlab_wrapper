@@ -136,9 +136,19 @@ class MatlabSession(object):
 
         ### Workspace object
         self.workspace = Workspace(weakref.ref(self))
-
-
-
+        
+        
+        # last step: setupt magics, if we are in IPython
+        try:
+            ip = get_ipython()
+        except NameError:
+            return
+        else:
+            if 'matlab' not in ip.magics_manager.magics:
+                # in IPython but we are the first Client.
+                # activate a default view for parallel magics.
+                self.activate()
+        
 
     def __del__(self):
         self._libeng.engClose(self._ep)
@@ -219,8 +229,30 @@ class MatlabSession(object):
         self._libmx.mxDestroyArray(pm)
 
 
-
-
+    def activate(self,suffix=''):
+        """Activate IPython magics associated with this View
+        Defines the magics `%matpush, %matpull, %matlab`
+        
+        Parameters
+        ----------
+        suffix: str [default: '']
+            The suffix, if any, for the magics. This allows you to have
+            multiple views associated with parallel magics at the same time.
+            e.g. ``rc[::2].activate(suffix='_13')`` will give you
+            the magics ``%matlab_13``, ``%matpush_13``, etc. 
+        """
+        
+        from matlab_wrapper.magics import MatlabMagics
+        
+        try:
+            ip = get_ipython()
+        except NameError:
+            print("The IPython matlab magics (%matlab, etc.) only work within IPython.")
+            return
+            
+        M = MatlabMagics(ip,self)
+        ip.magics_manager.register(M)
+            
 
     def __repr__(self):
         r = '<MatlabSession:{root}>'.format(root=self._matlab_root)
