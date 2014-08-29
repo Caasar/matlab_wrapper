@@ -64,5 +64,9 @@ class MatlabMagics(Magics):
             self.matlab.eval(line)
             
         if self.matlab.output_buffer:
-            print(self.matlab.output_buffer)
+            tocut = '>> >> >> '
+            if self.matlab.output_buffer[:len(tocut)] == tocut:
+                print(self.matlab.output_buffer[len(tocut):])
+            else:
+                print(self.matlab.output_buffer)
         
